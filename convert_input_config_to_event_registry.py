@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from yaml import safe_load, safe_dump
 
+DEFAULT_EVENT_REGISTRY_PATH = "event_registry.yaml"
 REQUIRED_ENTRY_KEYS = ["type", "module_id", "event_id", "operations"]
 VALID_ENTRY_TYPES = {"counter", "gauge", "enum"}
 VALID_ENTRY_OPERATIONS = {"sum", "average", "rolling_average", "show_current"}
@@ -74,8 +75,10 @@ def create_event_registry_from_config(monitoring_entries_config_path: str, event
 def parse_args():
     parser = ArgumentParser(description="Convert module-event config into metric registry format")
 
-    parser.add_argument("-i", "--input", type=Path, required=True, help="Input YAML config (e.g. monitor_config.yaml)")
-    parser.add_argument("-o", "--output", type=Path, required=True, help="Output YAML (e.g. metric_registry.yaml)")
+    parser.add_argument("-i", "--input", type=Path, required=True, 
+                        help="Input YAML config (e.g. monitor_config.yaml)")
+    parser.add_argument("-o", "--output", type=Path, default=Path(DEFAULT_EVENT_REGISTRY_PATH),
+                        help="Output YAML (e.g. event_registry.yaml)")
 
     args = parser.parse_args()
 
@@ -83,8 +86,9 @@ def parse_args():
     if not (input_path.exists() and input_path.is_file() and input_path.suffix == ".yaml"):
         raise ValueError(f"File {input_path} is an invalid yaml file")
 
-    if not args.output.suffix == ".yaml":
-        raise ValueError("Output file must be a .json file")
+    if args.output:
+        if not args.output.suffix == ".yaml":
+            raise ValueError("Output file must be a .yaml file")
     return args
 
 
