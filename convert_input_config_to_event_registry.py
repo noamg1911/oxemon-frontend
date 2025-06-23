@@ -1,8 +1,7 @@
-from yaml import safe_load, safe_dump
-from collections import defaultdict
 from pathlib import Path
-import sys
 from argparse import ArgumentParser
+from collections import defaultdict
+from yaml import safe_load, safe_dump
 
 REQUIRED_ENTRY_KEYS = ["type", "module_id", "event_id", "operations"]
 VALID_ENTRY_TYPES = {"counter", "gauge", "enum"}
@@ -75,19 +74,18 @@ def create_event_registry_from_config(monitoring_entries_config_path: str, event
 def parse_args():
     parser = ArgumentParser(description="Convert module-event config into metric registry format")
 
-    parser.add_argument("-i", "--input", type=Path, required=True, help="Input YAML config (e.g. monitoring_config.yaml)")
-    parser.add_argument("-o", "--output", type=Path, required=True, help="Output YAML file (e.g. metric_registry.yaml)")
+    parser.add_argument("-i", "--input", type=Path, required=True, help="Input YAML config (e.g. monitor_config.yaml)")
+    parser.add_argument("-o", "--output", type=Path, required=True, help="Output YAML (e.g. metric_registry.yaml)")
 
-    arguments = parser.parse_args()
+    args = parser.parse_args()
 
-    input_path = arguments.input
+    input_path = args.input
     if not (input_path.exists() and input_path.is_file() and input_path.suffix == ".yaml"):
         raise ValueError(f"File {input_path} is an invalid yaml file")
 
-    if not arguments.output.suffix == ".yaml":
+    if not args.output.suffix == ".yaml":
         raise ValueError("Output file must be a .json file")
-    
-    return arguments
+    return args
 
 
 if __name__ == "__main__":
