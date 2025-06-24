@@ -1,23 +1,33 @@
 red_incoming_bytes:
   type: counter
-  module_id: "Red Socket"
-  event_id: "incoming_bytes"
+  module_id: red_socket
+  event_id: incoming_bytes
   operations:
     - sum
     - rolling_average
 
 cmtp_incoming_bytes:
   type: counter
-  module_id: "CMTP Internal Socket"
-  event_id: "incoming_bytes"
+  module_id: cmtp_internal_socket
+  event_id: incoming_bytes
   operations:
     - sum
     - rolling_average
 
+cmtp_state:
+  type: enum
+  module_id: cmtp_internal_socket
+  event_id: current_state
+  operations:
+    - show_current
+  values:
+    0: "init"
+    1: "operational"
+
 umtp_state:
   type: enum
-  module_id: "UMTP State Machine"
-  event_id: "current state"
+  module_id: umtp_state_machine
+  event_id: current_state
   operations:
     - show_current
   values:
