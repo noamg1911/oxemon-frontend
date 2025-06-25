@@ -1,0 +1,6 @@
+docker network create monitoring-net
+
+docker run -p 9090:9090 --rm --network monitoring-net --name prometheus -v /Users/alonalexander/Dropbox/programming/oxemon/oxemon-frontend/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+
+docker run -d -p 3000:3000 --rm --network monitoring-net --name=grafana grafana/grafana-oss
+

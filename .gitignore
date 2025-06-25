@@ -1,2 +1,4 @@
 .vscode/
 __pycache__/
+dashboards/
+event_registry.yaml

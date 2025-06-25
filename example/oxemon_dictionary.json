@@ -1,0 +1,62 @@
+{
+  "module_ids": [
+    {
+      "string": "my_project.messages.red",
+      "hash": 298
+    },
+    {
+      "string": "my_project.umtp.state_machine",
+      "hash": 946
+    },
+    {
+      "string": "example",
+      "hash": 748
+    }
+  ],
+  "event_ids": [
+    {
+      "string": "counters.incoming",
+      "hash": 1781,
+      "event_type": "counter"
+    },
+    {
+      "string": "random counter",
+      "hash": 1441,
+      "event_type": "counter"
+    },
+    {
+      "string": "current_state",
+      "hash": 1411,
+      "event_type": "enum"
+    },
+    {
+      "string": "run_time.label",
+      "hash": 1425,
+      "event_type": "enum"
+    },
+    {
+      "string": "current state",
+      "hash": 1348,
+      "event_type": "enum"
+    }
+  ],
+  "misc_conversions": [],
+  "expected_couplings": [
+    {
+      "module_id": "my_project.messages.red",
+      "event_id": "counters.incoming"
+    },
+    {
+      "module_id": "example",
+      "event_id": "random counter"
+    },
+    {
+      "module_id": "my_project.umtp.state_machine",
+      "event_id": "current_state"
+    },
+    {
+      "module_id": "example",
+      "event_id": "current state"
+    }
+  ]
+}

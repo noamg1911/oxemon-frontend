@@ -3,6 +3,10 @@ from pathlib import Path
 import yaml
 from prometheus_client import start_http_server, Counter, Gauge, REGISTRY
 
+import socket
+import json
+from icd_converter import converter
+
 metric_instances = {}
 
 
@@ -53,6 +57,58 @@ def simulate_metric_updates():
                     metric_instance.set(value)
         time.sleep(1)
 
+
+def push_event(event: converter.EventUpdate):
+    module_name = replace_whitespace_in_name(event.module_name)
+    event_name = replace_whitespace_in_name(event.event_name)
+
+    try:
+        metric = metric_instances[event_name][module_name]
+        if isinstance(metric, Counter):
+            print(f"setting counter {metric} to {event.value}")
+            metric.inc(event.value)
+        else:
+            print(f"setting enum {metric} to {event.value}")
+            metric.set(event.value)
+    except KeyError:
+        pass
+
+
+# Configuration
+LISTEN_IP = "0.0.0.0"
+LISTEN_PORT = 8765
+
+def main_metric_updates():
+    with open("icd_converter/example/oxemon_dictionary.json", "r") as f:
+        hash_converter = converter.create_conversion_map(json.load(f))
+
+    # Create a UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # Bind to the IP and port
+    sock.bind((LISTEN_IP, LISTEN_PORT))
+    print(f"Listening for UDP packets on {LISTEN_IP}:{LISTEN_PORT}...")
+
+    try:
+        while True:
+            data, addr = sock.recvfrom(4096)  # 4096 bytes buffer
+            print(f"\nReceived {len(data)} bytes from {addr}:")
+            print(f"Raw bytes: {data}")
+
+            try:
+                event = converter.convert_incoming_message(
+                    message=data,
+                    conversion_map=hash_converter
+                )
+                print(event)
+                push_event(event)
+            except ValueError as e:
+                print("Got invalid message: ", e)
+    except KeyboardInterrupt:
+        print("\nExiting...")
+    finally:
+        sock.close()
+
 if __name__ == "__main__":
     registry = load_registry("event_registry.yaml")
     create_metric_families(registry)
@@ -60,4 +116,4 @@ if __name__ == "__main__":
     start_http_server(8000)
     print("Prometheus metrics available at http://localhost:8000/metrics")
 
-    simulate_metric_updates()
+    main_metric_updates()
