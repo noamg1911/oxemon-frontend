@@ -1,5 +1,5 @@
 from typing import List, Dict
-import icd
+from icd_converter import icd
 from dataclasses import dataclass
 
 def _create_map(conversion_list: List[dict]) -> Dict[int, str]:
@@ -29,9 +29,9 @@ def convert_incoming_message(*, message: bytes, conversion_map: Dict[str, str]) 
 
     body = message[1]
     if isinstance(body, icd.EmitCounter):
-        value = body.counter_value
+        value = body.counter_value.value
     elif isinstance(body, icd.EmitLabel):
-        value = body.label
+        value = body.label.value
     
     try:
         module_name = conversion_map[str(message[icd.EmitHeader].module_id.value)]
