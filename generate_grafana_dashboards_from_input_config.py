@@ -1,18 +1,20 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
+from copy import deepcopy
 from json import dump
 from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
 
+PROMETHEUS_SOURCE_UID = "bep9hdu1kkum8b"
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
 PANEL_HEIGHT = 8
 PANEL_WIDTH = 12
-DEFAULT_PANEL = {
+TEMPLATE_PANEL = {
         "id": "id",
         "type": "timeseries",
         "title": "title",
-        "datasource": {"type": "prometheus", "uid": "PROM"},
+        "datasource": {"type": "prometheus", "uid": PROMETHEUS_SOURCE_UID},
         "targets": [{
             "expr": "expr",
             "legendFormat": "{{module}}",
@@ -83,14 +85,18 @@ def convert_monitoring_entries_to_module_dashboards(monitoring_entries: dict) ->
     panel_id = 0
 
     for entry_name, entry in monitoring_entries.items():
-        panel = DEFAULT_PANEL
+        base_panel = deepcopy(TEMPLATE_PANEL)
         if entry["type"] == "enum":
-            panel["fieldConfig"]["defaults"]["mappings"] = generate_grafana_enum_mapping_from_config_entry(entry)
+            base_panel["fieldConfig"]["defaults"]["mappings"] = generate_grafana_enum_mapping_from_config_entry(entry)
+        metric_name = entry["event_id"]
+        if entry["type"] == "counter":
+            metric_name = f"{metric_name}_total"
         metric_operations = entry.get("operations", ["value"])
         for operation in metric_operations:
+            panel = deepcopy(base_panel)
             panel["id"] = panel_id
             panel["title"] = f"{entry_name} - {operation}"
-            panel["targets"][0]["expr"] = generate_promql_expression(entry["event_id"], entry["module_id"], operation)
+            panel["targets"][0]["expr"] = generate_promql_expression(metric_name, entry["module_id"], operation)
             panel["targets"][0]["title"] = panel["title"]
             panel["gridPos"]["y"] = panel_id * PANEL_HEIGHT
             module_panels[entry["module_id"]].append(panel)
