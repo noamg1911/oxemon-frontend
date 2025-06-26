@@ -11,7 +11,7 @@ build:
 
 start:
 	$(call _check-var,CONFIG_FOLDER)
-	docker-compose up
+	docker-compose up -d
 
 stop:
 	docker-compose down
