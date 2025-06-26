@@ -1,1 +1,4 @@
 pyYAML
+hydration
+prometheus-client
+requests
