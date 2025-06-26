@@ -123,9 +123,13 @@ def save_module_dashboards(module_dashboards_data: list, dashboards_directory: s
             dump(dashboard, f, indent=2)
 
 
-def upload_module_dashboards(module_dashboards_data: list, folder_id=0, overwrite=True):
+def upload_module_dashboards(module_dashboards_data: list, grafana_api_key: str, folder_id=0, overwrite=True):
+    api_header = {
+        "Authorization": f"Bearer {grafana_api_key}",
+        "Content-Type": "application/json"
+    }
     for dashboard in module_dashboards_data:
-        existing_dashboard_uid = check_dashboard_exists(dashboard["title"])
+        existing_dashboard_uid = check_dashboard_exists(dashboard["title"], api_header)
         if existing_dashboard_uid:
             dashboard["uid"] = existing_dashboard_uid
 
@@ -135,7 +139,7 @@ def upload_module_dashboards(module_dashboards_data: list, folder_id=0, overwrit
             "overwrite": overwrite
         }
 
-        response = requests.post(f"{GRAFANA_URL}/api/dashboards/db", headers=GRAFANA_API_HEADER, data=dumps(payload),
+        response = requests.post(f"{GRAFANA_URL}/api/dashboards/db", headers=api_header, data=dumps(payload),
                                  timeout=10)
 
         if response.status_code != 200:
@@ -143,9 +147,9 @@ def upload_module_dashboards(module_dashboards_data: list, folder_id=0, overwrit
             print(response.text)
 
 
-def check_dashboard_exists(title: str):
+def check_dashboard_exists(title: str, grafana_api_header: dict):
     try:
-        response = requests.get(f"{GRAFANA_URL}/api/search?query={title}", headers=GRAFANA_API_HEADER, timeout=5)
+        response = requests.get(f"{GRAFANA_URL}/api/search?query={title}", headers=grafana_api_header, timeout=5)
         if response.status_code != 200:
             return None
         results = response.json()
@@ -159,7 +163,8 @@ def check_dashboard_exists(title: str):
         return None
 
 
-def create_module_dashboards_from_config(monitoring_entries_config_path: str, dashboards_directory: str):
+def create_module_dashboards_from_config(monitoring_entries_config_path: str, dashboards_directory: str,
+                                         grafana_api_key: str):
     """
     Creates module-centric dashboards from a given monitoring entries configuration file.
     """
@@ -168,7 +173,7 @@ def create_module_dashboards_from_config(monitoring_entries_config_path: str, da
     Path(dashboards_directory).mkdir(parents=True, exist_ok=True)
     module_dashboards = convert_monitoring_entries_to_module_dashboards(config_data)
     save_module_dashboards(module_dashboards, dashboards_directory)
-    upload_module_dashboards(module_dashboards)
+    upload_module_dashboards(module_dashboards, grafana_api_key)
 
 
 def parse_args():
@@ -177,6 +182,8 @@ def parse_args():
                         help="Input YAML config (e.g. monitor_config.yaml)")
     parser.add_argument("-o", "--output", type=Path, default=Path(DEFAULT_DASHBOARDS_DIRECTORY_NAME),
                         help="Output directory (e.g. outputs)")
+    parser.add_argument("--key", required=True,
+                        help="Grafana instance API key")
     args = parser.parse_args()
 
     input_path = args.input
@@ -188,4 +195,4 @@ def parse_args():
 
 if __name__ == "__main__":
     arguments = parse_args()
-    create_module_dashboards_from_config(arguments.input, arguments.output)
+    create_module_dashboards_from_config(arguments.input, arguments.output, arguments.key)
