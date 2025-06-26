@@ -1,6 +1,7 @@
 import time
 import yaml
 from prometheus_client import start_http_server, Counter, Gauge
+import signal
 
 import socket
 import json
@@ -17,6 +18,13 @@ LISTEN_PORT = 1414
 
 
 metric_instances = {}
+shutdown = False
+
+
+def handle_signal(signum, frame):
+    global shutdown
+    print(f"Received signal {signum}, preparing to exit...")
+    shutdown = True
 
 
 # Very basic sanitization for Prometheus metric names (same as in `generate_grafana_dashboards_from_input_config.py`)
@@ -72,6 +80,7 @@ def push_event(event: converter.EventUpdate):
 
 
 def main_metric_updates():
+    global shutdown
     with open(DICTIONARY_PATH, "r") as f:
         hash_converter = converter.create_conversion_map(json.load(f))
 
@@ -80,11 +89,19 @@ def main_metric_updates():
 
     # Bind to the IP and port
     sock.bind((LISTEN_IP, LISTEN_PORT))
+    sock.settimeout(1.0)  # Set timeout to 1 second (for gracefully exiting)
     print(f"Listening for UDP packets on {LISTEN_IP}:{LISTEN_PORT}...")
 
     try:
-        while True:
+        while not shutdown:
             data, addr = sock.recvfrom(4096)  # 4096 bytes buffer
+            try:
+                data, addr = sock.recvfrom(4096)
+                print(f"Received data from {addr}: {data}")
+            except socket.timeout:
+                # Just loop again and check shutdown flag
+                continue
+
             print(f"\nReceived {len(data)} bytes from {addr}:")
             print(f"Raw bytes: {data}")
 
@@ -109,5 +126,9 @@ if __name__ == "__main__":
 
     start_http_server(8000)
     print("Prometheus metrics available at http://oxemon_adapter:8000/metrics")
+
+    # To exit graefully when "docker-compose down"
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
 
     main_metric_updates()
