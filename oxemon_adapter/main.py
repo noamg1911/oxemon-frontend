@@ -5,6 +5,7 @@ from prometheus_client import start_http_server, Counter, Gauge
 import socket
 import json
 import converter
+from utils.generate_grafana_dashboards_from_input_config import replace_whitespace
 
 
 EVENT_REGISTRY_PATH = "config/event_registry.yaml"

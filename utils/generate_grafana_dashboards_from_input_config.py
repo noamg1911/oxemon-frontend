@@ -5,7 +5,6 @@ from copy import deepcopy
 from json import dump
 from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
-from internal import replace_whitespace
 
 PROMETHEUS_SOURCE_UID = "prometheus_ds"
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
@@ -20,6 +19,11 @@ TEMPLATE_PANEL = {
     "gridPos": {"h": PANEL_HEIGHT, "w": PANEL_WIDTH, "x": 0, "y": 0},
     "fieldConfig": {"defaults": {"mappings": []}},
 }
+
+
+# Very basic sanitization for Prometheus metric names
+def replace_whitespace(name):
+    return name.strip().lower().replace(" ", "_")
 
 
 def generate_promql_expression(metric_name: str, module_label: str, operation: str) -> str:
