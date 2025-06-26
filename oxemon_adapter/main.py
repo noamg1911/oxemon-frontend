@@ -1,16 +1,23 @@
 import time
-from pathlib import Path
 import yaml
-from prometheus_client import start_http_server, Counter, Gauge, REGISTRY
+from prometheus_client import start_http_server, Counter, Gauge
 
 import socket
 import json
-from icd_converter import converter
+import converter
+
+
+EVENT_REGISTRY_PATH = "config/event_registry.yaml"
+DICTIONARY_PATH = "config/oxemon_dictionary.json"
+
+LISTEN_IP = "0.0.0.0"
+LISTEN_PORT = 1414
+
 
 metric_instances = {}
 
 
-def load_registry(path='event_registry.yaml'):
+def load_registry(path):
     with open(path, 'r') as f:
         return yaml.safe_load(f)
 
@@ -74,12 +81,8 @@ def push_event(event: converter.EventUpdate):
         pass
 
 
-# Configuration
-LISTEN_IP = "0.0.0.0"
-LISTEN_PORT = 8765
-
 def main_metric_updates():
-    with open("example/oxemon_dictionary.json", "r") as f:
+    with open(DICTIONARY_PATH, "r") as f:
         hash_converter = converter.create_conversion_map(json.load(f))
 
     # Create a UDP socket
@@ -110,10 +113,10 @@ def main_metric_updates():
         sock.close()
 
 if __name__ == "__main__":
-    registry = load_registry("event_registry.yaml")
+    registry = load_registry(EVENT_REGISTRY_PATH)
     create_metric_families(registry)
 
     start_http_server(8000)
-    print("Prometheus metrics available at http://localhost:8000/metrics")
+    print("Prometheus metrics available at http://oxemon_adapter:8000/metrics")
 
     main_metric_updates()

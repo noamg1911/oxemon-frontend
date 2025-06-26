@@ -18,3 +18,15 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  oxemon_adapter:
+    build:
+      context: ./oxemon_adapter
+    container_name: oxemon_adapter
+    ports:
+      - "${OXEMON_ADAPTER_PORT:-1414}:1414/udp"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ${CONFIG_FOLDER}:/app/config
+    working_dir: /app

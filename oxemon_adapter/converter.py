@@ -1,5 +1,5 @@
 from typing import List, Dict
-from icd_converter import icd
+import icd
 from dataclasses import dataclass
 
 def _create_map(conversion_list: List[dict]) -> Dict[int, str]:

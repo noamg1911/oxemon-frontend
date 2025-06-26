@@ -51,7 +51,7 @@ def convert_monitoring_entries_to_event_registry(monitoring_entries: dict) -> de
         if entry["type"] == "enum":
             registry[event_id]["values"] = entry["values"]
 
-    return {"metrics": dict(registry)}
+    return dict(registry)
 
 
 def save_event_registry(event_registry_data: dict, file_path: str):
