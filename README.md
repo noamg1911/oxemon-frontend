@@ -50,5 +50,56 @@ Go to http://localhost:3000/dashboards and view your dashboards!
 
 ## Metrics Configuration
 
+To see your metrics with `oxemon`, you need to define what metrics on which events you want to see.<br>
+This is done through a configuration file (a.k.a `metrics.yaml`).
+
+We'll explain its structure using the [example file](example/metrics.yaml).
+
+### Events
+Each top-level key defines an event to listen to. An event, as defined by `oxemon` is a combination of `module_id` and an `event_id`. Basically, the first means "where the event came from" and the second means "what event happened". See `oxemon agent` for more information on what they mean, how they differ and why they exist.
+
+In our example we monitor 2 events, called `example_counter` and `example_state`.
+These names are up to the user, and are shown in the name of the metric in the dashboard.
+
+All module ids and event ids that are available in your code are shown in the auto-generated `oxemon_dictionary.json`, and you are expected to use it as help when building your configuration file.
+
+**Tip!** In `oxemon_dictionary.json` there is a list called `expected_couplings` which includes combinations of known `module_id`s and `event_id`s that are found in your code (for example, hard-coded usages). They dramatically simplify the act of finding what possible events you can look at.
+
+### Event Configuration
+
+Each event in the configuration file has 4 required fields:
+
+- `type`: Type of the event (explained [below](#event-types-and-supported-metrics)).
+- `module_id`: The module name correlating to the wanted event.
+- `event_id`: The event name correlating to the wanted event.
+- `operations`: This is a list of metrics to show for that event, and its options are dependant on the type of the event. [See below](#event-types-and-supported-metrics) for more information.
+
+### Event Types and Supported Metrics
+
+`oxemon` currently supports 2 kinds of information monitoring: counters and enumerations.
+
+#### Counters
+These are numeric (unsigned) values, which are come to monitor sizes and amounts.
+
+Their `type` in the configuration is **`counter`**.
+
+Common usages include:
+- How many bytes were received?
+- How much time does some repeating action take?
+
+The **supported metrics** for a counter are:
+- `sum`: Shows the overall sum of the received events from when they started to arrive.
+- `rolling_average`: A time-based rolling average of the values emitted in this event.
+
+#### Enumerations
+These are numeric (unsigned) values, which are used to monitor states and values.
+
+Their `type` in the configuration is **`enum`**.
+
+Common usages include:
+- Current state in a state machine.
+- Information about having (or not having) configured information.
+- Notifying that something was loaded/deleted.
+
 ## System Details
 ### Architecture
