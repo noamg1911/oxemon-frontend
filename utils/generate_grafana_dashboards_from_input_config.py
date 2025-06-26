@@ -9,6 +9,7 @@ from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
 
 PROMETHEUS_SOURCE_UID = "prometheus_ds"
+LOKI_SOURCE_UID = "beq4nm08a8t8gd"
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
 PANEL_HEIGHT = 8
 PANEL_WIDTH = 12
@@ -76,6 +77,30 @@ def create_dashboard(name: str, panels: list) -> dict:
         "timezone": "browser",
     }
 
+ 
+def create_log_panel(panel_id: int, module_name: str):
+    log_panel = deepcopy(TEMPLATE_PANEL)
+    log_panel["type"] = "logs"
+    log_panel["id"] = panel_id
+    log_panel["title"] = f"{module_name} - logs"
+    log_panel["datasource"]["type"] = "loki"
+    log_panel["datasource"]["uid"] = LOKI_SOURCE_UID
+    log_panel["gridPos"]["x"] = PANEL_WIDTH
+    log_panel["options"] = {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": False,
+        "enableLogDetails": True,
+        "prettifyLogMessage": False,
+        "showCommonLabels": False,
+        "showLabels": False,
+        "showTime": True,
+        "sortOrder": "Descending",
+        "wrapLogMessage": False
+        }
+    log_panel["targets"][0]["expr"] = f"{{module=\"{module_name}\"}}"
+
+    return log_panel
+
 
 def convert_monitoring_entries_to_module_dashboards(monitoring_entries: dict) -> list:
     """
@@ -103,6 +128,10 @@ def convert_monitoring_entries_to_module_dashboards(monitoring_entries: dict) ->
             panel["gridPos"]["y"] = panel_id * PANEL_HEIGHT
             module_panels[entry["module_id"]].append(panel)
             panel_id += 1
+
+    for module in module_panels.keys():
+        module_panels[module].append(create_log_panel(panel_id, module))
+        panel_id += 1
 
     return [create_dashboard(module_name, panels) for module_name, panels in module_panels.items()]
 
