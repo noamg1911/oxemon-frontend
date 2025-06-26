@@ -52,6 +52,10 @@ def create_metric_families(registry_data):
 
 
 def push_event(event: converter.EventUpdate):
+    if event.event_type == "log":
+        print("Please implement push for logs")
+        return
+
     module_name = replace_whitespace(event.module_name)
     event_name = replace_whitespace(event.event_name)
 
