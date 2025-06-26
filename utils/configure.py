@@ -53,6 +53,12 @@ if __name__ == '__main__':
     with log_step("Create output directory", verbose=False):
         args.output.mkdir(exist_ok=True)
 
+    with log_step("Copy source files for reproducability", verbose=False):
+        src_dir = args.output / "src"
+        src_dir.mkdir(exist_ok=True)
+        shutil.copy2(str(args.dictionary), str(src_dir))
+        shutil.copy2(str(args.metrics), str(src_dir))
+
     with log_step("Create event registry"):
         convert_input_config_to_event_registry.create_event_registry_from_config(
             args.metrics,
