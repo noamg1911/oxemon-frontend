@@ -9,12 +9,6 @@ from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
 
 PROMETHEUS_SOURCE_UID = "prometheus_ds"
-GRAFANA_URL = "http://localhost:3000"
-GRAFANA_API_KEY = "glsa_qn9KbdNF0UGiOyVOgb8ZhX3w53PyaTrl_99c955e9"
-GRAFANA_API_HEADER = {
-    "Authorization": f"Bearer {GRAFANA_API_KEY}",
-    "Content-Type": "application/json"
-}
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
 PANEL_HEIGHT = 8
 PANEL_WIDTH = 12
@@ -29,7 +23,7 @@ TEMPLATE_PANEL = {
 }
 
 
-# Very basic sanitization for Prometheus metric names
+# Very basic sanitization for Prometheus metric names (same as in `generate_grafana_dashboards_from_input_config.py`)
 def replace_whitespace(name):
     return name.strip().lower().replace(" ", "_")
 
@@ -123,48 +117,7 @@ def save_module_dashboards(module_dashboards_data: list, dashboards_directory: s
             dump(dashboard, f, indent=2)
 
 
-def upload_module_dashboards(module_dashboards_data: list, grafana_api_key: str, folder_id=0, overwrite=True):
-    api_header = {
-        "Authorization": f"Bearer {grafana_api_key}",
-        "Content-Type": "application/json"
-    }
-    for dashboard in module_dashboards_data:
-        existing_dashboard_uid = check_dashboard_exists(dashboard["title"], api_header)
-        if existing_dashboard_uid:
-            dashboard["uid"] = existing_dashboard_uid
-
-        payload = {
-            "dashboard": dashboard,
-            "folderId": folder_id,
-            "overwrite": overwrite
-        }
-
-        response = requests.post(f"{GRAFANA_URL}/api/dashboards/db", headers=api_header, data=dumps(payload),
-                                 timeout=10)
-
-        if response.status_code != 200:
-            print(f"❌ Failed to upload dashboard: {response.status_code}")
-            print(response.text)
-
-
-def check_dashboard_exists(title: str, grafana_api_header: dict):
-    try:
-        response = requests.get(f"{GRAFANA_URL}/api/search?query={title}", headers=grafana_api_header, timeout=5)
-        if response.status_code != 200:
-            return None
-        results = response.json()
-
-        for existing_dashboards in results:
-            if existing_dashboards.get("title") == title and existing_dashboards.get("type") == "dash-db":
-                return existing_dashboards.get("uid")
-        return None
-    except Exception as e:
-        print(f"Error while checking dashboard: {e}")
-        return None
-
-
-def create_module_dashboards_from_config(monitoring_entries_config_path: str, dashboards_directory: str,
-                                         grafana_api_key: str):
+def create_module_dashboards_from_config(monitoring_entries_config_path: str, dashboards_directory: str):
     """
     Creates module-centric dashboards from a given monitoring entries configuration file.
     """
@@ -173,7 +126,6 @@ def create_module_dashboards_from_config(monitoring_entries_config_path: str, da
     Path(dashboards_directory).mkdir(parents=True, exist_ok=True)
     module_dashboards = convert_monitoring_entries_to_module_dashboards(config_data)
     save_module_dashboards(module_dashboards, dashboards_directory)
-    upload_module_dashboards(module_dashboards, grafana_api_key)
 
 
 def parse_args():
@@ -182,8 +134,6 @@ def parse_args():
                         help="Input YAML config (e.g. monitor_config.yaml)")
     parser.add_argument("-o", "--output", type=Path, default=Path(DEFAULT_DASHBOARDS_DIRECTORY_NAME),
                         help="Output directory (e.g. outputs)")
-    parser.add_argument("--key", required=True,
-                        help="Grafana instance API key")
     args = parser.parse_args()
 
     input_path = args.input
@@ -195,4 +145,4 @@ def parse_args():
 
 if __name__ == "__main__":
     arguments = parse_args()
-    create_module_dashboards_from_config(arguments.input, arguments.output, arguments.key)
+    create_module_dashboards_from_config(arguments.input, arguments.output)

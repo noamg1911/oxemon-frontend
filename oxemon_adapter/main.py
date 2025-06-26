@@ -5,11 +5,12 @@ from prometheus_client import start_http_server, Counter, Gauge
 import socket
 import json
 import converter
-from utils.generate_grafana_dashboards_from_input_config import replace_whitespace
+from upload_dashboards import upload_module_dashboards, load_module_dashboards
 
 
 EVENT_REGISTRY_PATH = "config/event_registry.yaml"
 DICTIONARY_PATH = "config/oxemon_dictionary.json"
+DASHBOARDS_PATH = "config/dashboards/"
 
 LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 1414
@@ -18,7 +19,12 @@ LISTEN_PORT = 1414
 metric_instances = {}
 
 
-def load_registry(path="event_registry.yaml"):
+# Very basic sanitization for Prometheus metric names (same as in `generate_grafana_dashboards_from_input_config.py`)
+def replace_whitespace(name):
+    return name.strip().lower().replace(" ", "_")
+
+
+def load_registry(path):
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
@@ -93,6 +99,9 @@ def main_metric_updates():
 if __name__ == "__main__":
     registry = load_registry(EVENT_REGISTRY_PATH)
     create_metric_families(registry)
+
+    dashboards = load_module_dashboards(DASHBOARDS_PATH)
+    upload_module_dashboards(dashboards)
 
     start_http_server(8000)
     print("Prometheus metrics available at http://oxemon_adapter:8000/metrics")
