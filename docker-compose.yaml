@@ -6,14 +6,14 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${CONFIG_FOLDER}/prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana
     ports:
       - "3000:3000"
     volumes:
-      - ./config/provisioning:/etc/grafana/provisioning
+      - ${CONFIG_FOLDER}/provisioning:/etc/grafana/provisioning
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
