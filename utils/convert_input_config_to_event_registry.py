@@ -39,7 +39,7 @@ def validate_config(config_data: dict):
         validate_entry(name, entry)
 
 
-def convert_monitoring_entries_to_event_registry(monitoring_entries: dict) -> defaultdict:
+def convert_monitoring_entries_to_event_registry(monitoring_entries: dict) -> dict:
     """
     Creates an "event-centric" dictionary from a given dictionary of monitoring entries.
     """
