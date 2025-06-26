@@ -9,7 +9,7 @@ from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
 
 PROMETHEUS_SOURCE_UID = "prometheus_ds"
-LOKI_SOURCE_UID = "beq4nm08a8t8gd"
+LOKI_SOURCE_UID = "loki_ds"
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
 PANEL_HEIGHT = 8
 PANEL_WIDTH = 12

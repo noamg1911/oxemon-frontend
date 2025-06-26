@@ -14,7 +14,7 @@ start:
 	docker-compose up -d
 
 stop:
-	docker-compose down -t 2
+	docker-compose down -t 4
 
 .PHONY: config
 config:

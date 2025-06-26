@@ -17,7 +17,7 @@ DASHBOARDS_PATH = "config/dashboards/"
 LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 1414
 
-LOKI_BASE_URL = "http://localhost:3100" # please put here the relevant one (considering docker network)
+LOKI_BASE_URL = "http://loki:3100"
 LOKI_LOG_MESSAGE_TEMPLATE = {
     "streams": [{
         "stream": {
@@ -112,7 +112,6 @@ def main_metric_updates():
 
     try:
         while not shutdown:
-            data, addr = sock.recvfrom(4096)  # 4096 bytes buffer
             try:
                 data, addr = sock.recvfrom(4096)
                 print(f"Received data from {addr}: {data}")
