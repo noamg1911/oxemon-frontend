@@ -1,12 +1,20 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
+import requests
+from hashlib import sha256
 from copy import deepcopy
-from json import dump
+from json import dump, dumps
 from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
 
 PROMETHEUS_SOURCE_UID = "prometheus_ds"
+GRAFANA_URL = "http://localhost:3000"
+GRAFANA_API_KEY = "glsa_qn9KbdNF0UGiOyVOgb8ZhX3w53PyaTrl_99c955e9"
+GRAFANA_API_HEADER = {
+    "Authorization": f"Bearer {GRAFANA_API_KEY}",
+    "Content-Type": "application/json"
+}
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
 PANEL_HEIGHT = 8
 PANEL_WIDTH = 12
@@ -65,7 +73,7 @@ def create_dashboard(name: str, panels: list) -> dict:
         panels: The panels that will be in the dashboard.
     """
     return {
-        "uid": f"{name[:10]}",
+        "uid": sha256(name.encode()).hexdigest()[:20],
         "title": name,
         "panels": panels,
         "schemaVersion": 37,
@@ -115,6 +123,42 @@ def save_module_dashboards(module_dashboards_data: list, dashboards_directory: s
             dump(dashboard, f, indent=2)
 
 
+def upload_module_dashboards(module_dashboards_data: list, folder_id=0, overwrite=True):
+    for dashboard in module_dashboards_data:
+        existing_dashboard_uid = check_dashboard_exists(dashboard["title"])
+        if existing_dashboard_uid:
+            dashboard["uid"] = existing_dashboard_uid
+
+        payload = {
+            "dashboard": dashboard,
+            "folderId": folder_id,
+            "overwrite": overwrite
+        }
+
+        response = requests.post(f"{GRAFANA_URL}/api/dashboards/db", headers=GRAFANA_API_HEADER, data=dumps(payload),
+                                 timeout=10)
+
+        if response.status_code != 200:
+            print(f"❌ Failed to upload dashboard: {response.status_code}")
+            print(response.text)
+
+
+def check_dashboard_exists(title: str):
+    try:
+        response = requests.get(f"{GRAFANA_URL}/api/search?query={title}", headers=GRAFANA_API_HEADER, timeout=5)
+        if response.status_code != 200:
+            return None
+        results = response.json()
+
+        for existing_dashboards in results:
+            if existing_dashboards.get("title") == title and existing_dashboards.get("type") == "dash-db":
+                return existing_dashboards.get("uid")
+        return None
+    except Exception as e:
+        print(f"Error while checking dashboard: {e}")
+        return None
+
+
 def create_module_dashboards_from_config(monitoring_entries_config_path: str, dashboards_directory: str):
     """
     Creates module-centric dashboards from a given monitoring entries configuration file.
@@ -124,6 +168,7 @@ def create_module_dashboards_from_config(monitoring_entries_config_path: str, da
     Path(dashboards_directory).mkdir(parents=True, exist_ok=True)
     module_dashboards = convert_monitoring_entries_to_module_dashboards(config_data)
     save_module_dashboards(module_dashboards, dashboards_directory)
+    upload_module_dashboards(module_dashboards)
 
 
 def parse_args():
