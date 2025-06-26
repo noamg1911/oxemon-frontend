@@ -2,6 +2,7 @@ import time
 import yaml
 from prometheus_client import start_http_server, Counter, Gauge
 import signal
+import requests
 
 import socket
 import json
@@ -16,6 +17,16 @@ DASHBOARDS_PATH = "config/dashboards/"
 LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 1414
 
+LOKI_BASE_URL = "http://localhost:3100" # please put here the relevant one (considering docker network)
+LOKI_LOG_MESSAGE_TEMPLATE = {
+    "streams": [{
+        "stream": {
+            "module": "module",
+            "level": "info"
+        },
+        "values": [["", "message"]]
+    }]
+}
 
 metric_instances = {}
 shutdown = False
@@ -30,6 +41,10 @@ def handle_signal(signum, frame):
 # Very basic sanitization for Prometheus metric names (same as in `generate_grafana_dashboards_from_input_config.py`)
 def replace_whitespace(name):
     return name.strip().lower().replace(" ", "_")
+
+
+def get_string_of_current_time():
+    return str(int(time.time() * 1e9))
 
 
 def load_registry(path):
@@ -60,12 +75,15 @@ def create_metric_families(registry_data):
 
 
 def push_event(event: converter.EventUpdate):
-    if event.event_type == "log":
-        print("Please implement push for logs")
-        return
-
     module_name = replace_whitespace(event.module_name)
     event_name = replace_whitespace(event.event_name)
+
+    if event.event_type == "log":
+        log_message = LOKI_LOG_MESSAGE_TEMPLATE
+        log_message["streams"][0]["stream"]["module"] = module_name
+        log_message["streams"][0]["values"] = [[get_string_of_current_time(), event.event_name]]
+        requests.post(f"{LOKI_BASE_URL}/loki/api/v1/push", json=log_message, timeout = 5)
+        return
 
     try:
         metric = metric_instances[event_name][module_name]
