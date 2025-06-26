@@ -40,7 +40,24 @@
       "event_type": "enum"
     }
   ],
-  "misc_conversions": [],
+  "misc_conversions": [
+    {
+      "string": "This is a very simple log",
+      "hash": 262
+    },
+    {
+      "string": "This is a log with a parameter {}",
+      "hash": 972
+    },
+    {
+      "string": "This is a log with {} parameters {}",
+      "hash": 1238
+    },
+    {
+      "string": "time passed in seconds is {}",
+      "hash": 616
+    }
+  ],
   "expected_couplings": [
     {
       "module_id": "my_project.messages.red",

@@ -1,6 +1,8 @@
 import time
 import yaml
 from prometheus_client import start_http_server, Counter, Gauge
+import signal
+import requests
 
 import socket
 import json
@@ -15,13 +17,34 @@ DASHBOARDS_PATH = "config/dashboards/"
 LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 1414
 
+LOKI_BASE_URL = "http://loki:3100"
+LOKI_LOG_MESSAGE_TEMPLATE = {
+    "streams": [{
+        "stream": {
+            "module": "module",
+            "level": "info"
+        },
+        "values": [["", "message"]]
+    }]
+}
 
 metric_instances = {}
+shutdown = False
+
+
+def handle_signal(signum, frame):
+    global shutdown
+    print(f"Received signal {signum}, preparing to exit...")
+    shutdown = True
 
 
 # Very basic sanitization for Prometheus metric names (same as in `generate_grafana_dashboards_from_input_config.py`)
 def replace_whitespace(name):
     return name.strip().lower().replace(" ", "_")
+
+
+def get_string_of_current_time():
+    return str(int(time.time() * 1e9))
 
 
 def load_registry(path):
@@ -55,6 +78,13 @@ def push_event(event: converter.EventUpdate):
     module_name = replace_whitespace(event.module_name)
     event_name = replace_whitespace(event.event_name)
 
+    if event.event_type == "log":
+        log_message = LOKI_LOG_MESSAGE_TEMPLATE
+        log_message["streams"][0]["stream"]["module"] = module_name
+        log_message["streams"][0]["values"] = [[get_string_of_current_time(), event.event_name]]
+        requests.post(f"{LOKI_BASE_URL}/loki/api/v1/push", json=log_message, timeout = 5)
+        return
+
     try:
         metric = metric_instances[event_name][module_name]
         if isinstance(metric, Counter):
@@ -68,6 +98,7 @@ def push_event(event: converter.EventUpdate):
 
 
 def main_metric_updates():
+    global shutdown
     with open(DICTIONARY_PATH, "r") as f:
         hash_converter = converter.create_conversion_map(json.load(f))
 
@@ -76,11 +107,18 @@ def main_metric_updates():
 
     # Bind to the IP and port
     sock.bind((LISTEN_IP, LISTEN_PORT))
+    sock.settimeout(1.0)  # Set timeout to 1 second (for gracefully exiting)
     print(f"Listening for UDP packets on {LISTEN_IP}:{LISTEN_PORT}...")
 
     try:
-        while True:
-            data, addr = sock.recvfrom(4096)  # 4096 bytes buffer
+        while not shutdown:
+            try:
+                data, addr = sock.recvfrom(4096)
+                print(f"Received data from {addr}: {data}")
+            except socket.timeout:
+                # Just loop again and check shutdown flag
+                continue
+
             print(f"\nReceived {len(data)} bytes from {addr}:")
             print(f"Raw bytes: {data}")
 
@@ -105,5 +143,9 @@ if __name__ == "__main__":
 
     start_http_server(8000)
     print("Prometheus metrics available at http://oxemon_adapter:8000/metrics")
+
+    # To exit graefully when "docker-compose down"
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
 
     main_metric_updates()

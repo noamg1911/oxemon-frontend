@@ -1,4 +1,4 @@
-from hydration import Struct, UInt8, UInt32, UInt64, Enum, OpcodeField, Endianness
+from hydration import Struct, UInt8, UInt32, UInt64, Enum, OpcodeField, Endianness, Vector
 
 
 class EmitCounter(Struct):
@@ -9,9 +9,15 @@ class EmitLabel(Struct):
     label = UInt32
 
 
+class EmitLog(Struct):
+    param_count = UInt8
+    params = Vector("param_count", UInt64)
+
+
 OPCODE_DICTIONARY = {
     EmitCounter: 0,
     EmitLabel: 1,
+    EmitLog: 2,
 }
 
 
