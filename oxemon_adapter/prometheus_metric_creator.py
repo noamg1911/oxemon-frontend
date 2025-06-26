@@ -79,7 +79,7 @@ LISTEN_IP = "0.0.0.0"
 LISTEN_PORT = 8765
 
 def main_metric_updates():
-    with open("icd_converter/example/oxemon_dictionary.json", "r") as f:
+    with open("example/oxemon_dictionary.json", "r") as f:
         hash_converter = converter.create_conversion_map(json.load(f))
 
     # Create a UDP socket
