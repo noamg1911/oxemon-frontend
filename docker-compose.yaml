@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/provisioning:/etc/grafana/provisioning
+      - ./config/grafana.ini:/etc/grafana/grafana.ini
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  oxemon_adapter:
+    build:
+      context: ./oxemon_adapter
+    container_name: oxemon_adapter
+    ports:
+      - "${OXEMON_ADAPTER_PORT:-1414}:1414/udp"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ${CONFIG_FOLDER}:/app/config
+    working_dir: /app

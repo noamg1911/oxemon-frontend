@@ -6,7 +6,7 @@ from json import dump
 from yaml import safe_load
 from convert_input_config_to_event_registry import validate_config
 
-PROMETHEUS_SOURCE_UID = "eeq13vhwndkhsa"
+PROMETHEUS_SOURCE_UID = "prometheus_ds"
 DEFAULT_DASHBOARDS_DIRECTORY_NAME = "dashboards"
 PANEL_HEIGHT = 8
 PANEL_WIDTH = 12
