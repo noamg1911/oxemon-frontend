@@ -3,3 +3,4 @@ __pycache__/
 dashboards/
 event_registry.yaml
 example/out_config
+demo/out_config

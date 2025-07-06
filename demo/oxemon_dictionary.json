@@ -1,0 +1,45 @@
+{
+  "module_ids": [
+    {
+      "string": "server",
+      "hash": 663
+    }
+  ],
+  "event_ids": [
+    {
+      "string": "incoming_messages",
+      "hash": 1803,
+      "event_type": "counter"
+    },
+    {
+      "string": "incoming_bytes",
+      "hash": 1498,
+      "event_type": "counter"
+    },
+    {
+      "string": "current_state",
+      "hash": 1411,
+      "event_type": "enum"
+    }
+  ],
+  "misc_conversions": [
+    {
+      "string": "Received {} messages, last one's size is {}",
+      "hash": 1953
+    }
+  ],
+  "expected_couplings": [
+    {
+      "module_id": "server",
+      "event_id": "incoming_messages"
+    },
+    {
+      "module_id": "server",
+      "event_id": "incoming_bytes"
+    },
+    {
+      "module_id": "server",
+      "event_id": "current_state"
+    }
+  ]
+}

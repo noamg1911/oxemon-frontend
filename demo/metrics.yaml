@@ -1,0 +1,24 @@
+incoming_messages:
+  type: counter
+  module_id: server
+  event_id: incoming_messages
+  operations:
+    - sum
+
+incoming_bytes:
+  type: counter
+  module_id: server
+  event_id: incoming_bytes
+  operations:
+    - rolling_average
+
+state:
+  type: enum
+  module_id: server
+  event_id: current_state
+  operations:
+    - show_current
+  values:
+    0: "idle"
+    1: "running"
+    2: "stopped"
